@@ -1,0 +1,93 @@
+import { Avatar, Text } from "@mantine/core"
+import { IconAmbulance, IconCalendarCheck, IconDroplet, IconFileInvoiceFilled, IconHeartbeat, IconLayoutGrid, IconReceipt2, IconTestPipe, IconUser } from "@tabler/icons-react"
+import { useEffect, useState } from "react"
+import { useSelector } from "react-redux"
+import { NavLink } from "react-router-dom"
+
+import useProtectedImage from "../../Utilities/hook/useProtectedImage.tsx";
+import { getUserProfile } from "../../../Service/UserService.ts"
+
+const links = [
+  {
+    name: "Dashboard", url: "/patient/dashboard", icon: <IconLayoutGrid stroke={1.5} />
+  },
+  {
+    name: "profile", url: "/patient/profile", icon: <IconUser stroke={1.5} />
+  },
+
+  //  {
+  //   name : "Patients" , url :"/patients" , icon : <IconMoodHeart stroke={1.5} />
+  //  },
+  {
+    name: "Appointments", url: "/patient/appointment", icon: <IconCalendarCheck stroke={1.5} />
+  },
+
+  {
+    name: "Prescription", url: "/patient/prescription", icon: <IconFileInvoiceFilled stroke={1.5} />
+  },
+
+  { name: "Ambulance", url: "/patient/ambulance", icon: <IconAmbulance stroke={1.5} /> },
+  { name: "Blood Bank", url: "/patient/blood-bank", icon: <IconDroplet stroke={1.5} /> },
+  { name: "Lab Reports", url: "/patient/lab-reports", icon: <IconTestPipe stroke={1.5} /> },
+  { name: "My Bills", url: "/patient/billing", icon: <IconReceipt2 stroke={1.5} /> },
+  { name: "Room Booking", url: "/patient/room-booking", icon: <IconHeartbeat stroke={1.5} /> }
+
+]
+
+const Sidebar = () => {
+
+  const user = useSelector((state: any) => state.user);
+  const [picId, setPicId] = useState<string | null>(null)
+
+
+  useEffect(() => {
+    if (!user) return
+    getUserProfile(user.id)
+      .then((data) => setPicId(data))
+      .catch((err: any) => console.log("Error fetching profile picture:", err))
+  }, [user])
+
+  const url = useProtectedImage(picId)
+
+  return (
+    <div className="flex z-50">
+      <div className="w-64">
+
+      </div>
+      <div className="bg-darks fixed h-full overflow-y-auto w-64 flex flex-col gap-7 items-center">
+        <div className="fixed z-[500] py-3 bg-darks text-primary-400 flex gap-1 items-center">
+          <IconHeartbeat size={40} stroke={2.5} />
+          <span className="font-heading font-semibold text-3xl">Pulse</span>
+        </div>
+
+        <div className="flex flex-col mt-20 gap-6.5">
+
+          <div className="flex flex-col gap-1 items-center">
+            <div className="p-1 bg-white rounded-full shadow-xl">
+              <Avatar variant="filled" src={url} size="xl" alt="Profile" />
+            </div>
+            <span className="font-medium text-light">{user.name}</span>
+            <Text className="text-light" c={"dimmed"} size="xs">{user.role}</Text>
+          </div>
+          <div className="flex flex-col  gap-3">
+            {
+              links.map((link) => {
+                return <NavLink to={link.url} key={link.url}
+                  className={({ isActive }) => `flex items-center gap-3 w-full  text-light font-medium  px-4 py-5 rounded-lg
+                  ${isActive ? "bg-primary-400 text-darks" : "hover:bg-gray-100 hover:text-darks"}`
+                  }>
+                  {link.icon}
+                  <span>{link.name}</span>
+
+                </NavLink>
+              })
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+  )
+}
+
+export default Sidebar
