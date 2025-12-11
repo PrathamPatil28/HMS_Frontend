@@ -1,15 +1,13 @@
-import { ActionIcon, Button, Indicator, Menu } from "@mantine/core";
+import { ActionIcon, Indicator, Menu } from "@mantine/core"; // Removed 'Button'
 import { IconBellRinging, IconLayoutSidebarLeftCollapseFilled } from "@tabler/icons-react";
 import ProfileMenu from "./ProfileMenu";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { removeJwt } from "../../Slices/JwtSlice";
-import { removeUser } from "../../Slices/UserSlice";
+
 import { addNotification, markAllRead } from "../../Slices/NotificationSlice";
 
 import { successNotification } from "../../util/NotificationUtil";
 import useNotificationSocket from "../../Hook/useNotificationSocket";
-import { useRef } from "react"; // ✅ Import useRef
+import { useRef } from "react";
 
 const Header = () => {
   const jwt = useSelector((state: any) => state.jwt);
@@ -18,11 +16,11 @@ const Header = () => {
 
   const dispatch = useDispatch();
   
-  // ✅ FIX 1: Create a set to store IDs of notifications we already showed
+  // Create a set to store IDs of notifications we already showed
   const processedIds = useRef(new Set());
 
   useNotificationSocket(user?.id, (msg) => {
-    // ✅ FIX 2: Check if we already showed this specific Message ID
+    // Check if we already showed this specific Message ID
     if (processedIds.current.has(msg.id)) {
         console.log("🚫 Duplicate notification blocked:", msg.id);
         return;
@@ -36,10 +34,13 @@ const Header = () => {
     successNotification(msg.message);
   });
 
+  // Commented out because it is not used in the JSX below
+  /* 
   const handleLogout = () => {
     dispatch(removeJwt());
     dispatch(removeUser());
-  };
+  }; 
+  */
 
   return (
     <div className="bg-light shadow-lg w-full h-16 flex justify-between px-5 items-center">
@@ -78,6 +79,10 @@ const Header = () => {
           </Menu>
         )}
 
+        {/* 
+          Since this section is commented out, we removed the 
+          handleLogout function and imports above to prevent Build Errors.
+        */}
         {/* {jwt ? (
           <Button onClick={handleLogout} color="red.8">Logout</Button>
         ) : (
