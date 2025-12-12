@@ -1,4 +1,4 @@
-import { Avatar, Text } from "@mantine/core"
+import { Avatar, Text, Drawer, ScrollArea, Tooltip } from "@mantine/core"
 import {
     IconAmbulance,
     IconCalendarCheck,
@@ -17,7 +17,6 @@ import { NavLink } from "react-router-dom"
 import useProtectedImage from "../../Utilities/hook/useProtectedImage.tsx";
 import { getUserProfile } from "../../../Service/UserService.ts"
 
-
 const links = [
     { name: "Dashboard", url: "/doctor/dashboard", icon: <IconLayoutGrid stroke={1.5} /> },
     { name: "Profile", url: "/doctor/profile", icon: <IconUser stroke={1.5} /> },
@@ -27,10 +26,15 @@ const links = [
     { name: "Blood Bank", url: "/doctor/blood-bank", icon: <IconDroplet stroke={1.5} /> },
     { name: "Pharmacy", url: "/doctor/pharmacy", icon: <IconVaccine stroke={1.5} /> },
     { name: "My Salary", url: "/doctor/salary", icon: <IconCashBanknote stroke={1.5} /> },
-
 ]
 
-const Sidebar = () => {
+interface SidebarProps {
+    mobileOpened: boolean;
+    closeMobile: () => void;
+    desktopCollapsed: boolean;
+}
+
+const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) => {
     const user = useSelector((state: any) => state.user)
     const [picId, setPicId] = useState<string | null>(null)
 
@@ -43,50 +47,88 @@ const Sidebar = () => {
 
     const url = useProtectedImage(picId)
 
-    return (
-        <div className="flex">
-            <div className="w-64" />
-            <div className="bg-darks fixed h-screen overflow-y-auto w-64 flex flex-col gap-7 items-center">
-                {/* Logo Section */}
-                <div className="fixed z-[500] py-3 bg-darks text-primary-400 flex gap-1 items-center">
-                    <IconHeartbeat size={40} stroke={2.5} />
-                    <span className="font-heading font-semibold text-3xl">Pulse</span>
+    const SidebarContent = ({ isCollapsed }: { isCollapsed?: boolean }) => (
+        <div className="bg-darks h-full w-full flex flex-col no-scrollbar">
+            
+            {/* --- FIXED HEADER SECTION (Logo & User) --- */}
+            <div className="shrink-0 flex flex-col items-center">
+                {/* Logo */}
+                <div className={`py-4 bg-darks text-primary-400 flex gap-1 items-center justify-center transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
+                    <IconHeartbeat size={isCollapsed ? 30 : 40} stroke={2.5} />
+                    {!isCollapsed && <span className="font-heading font-semibold text-3xl transition-opacity duration-300">Pulse</span>}
                 </div>
 
-                {/* Profile Info */}
-                <div className="flex flex-col mt-20 gap-6.5">
-                    <div className="flex flex-col gap-1 items-center">
-                        <div className="p-1 bg-white rounded-full shadow-xl">
-                            {/* ✅ Dynamic protected profile image */}
-                            <Avatar variant="filled" src={url} size="xl" alt="Profile" />
-                        </div>
-                        <span className="font-medium text-light">{user?.name}</span>
-                        <Text className="text-light" c="dimmed" size="xs">
-                            {user?.role}
-                        </Text>
+                {/* User Profile */}
+                <div className={`flex flex-col gap-1 items-center mt-6 mb-4 transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
+                    <div className="p-1 bg-white rounded-full shadow-xl">
+                        <Avatar variant="filled" src={url} size={isCollapsed ? 'md' : 'xl'} alt="Profile" />
                     </div>
+                    
+                    {!isCollapsed && (
+                        <div className="text-center transition-opacity duration-300 animate-fade-in">
+                            <span className="font-medium text-light block">{user?.name}</span>
+                            <Text className="text-light" c="dimmed" size="xs">
+                                {user?.role}
+                            </Text>
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                    {/* Navigation Links */}
-                    <div className="flex flex-col gap-3">
-                        {links.map((link) => (
+            {/* --- SCROLLABLE LINKS SECTION --- */}
+            <div className="flex-1 overflow-y-auto px-2 pb-6 no-scrollbar">
+                <div className="flex flex-col gap-2">
+                    {links.map((link) => {
+                        const content = (
                             <NavLink
                                 to={link.url}
                                 key={link.url}
+                                onClick={closeMobile}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 w-full text-light font-medium px-4 py-5 rounded-lg ${isActive
+                                    `flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'} gap-3 w-full text-light font-medium px-3 py-3 rounded-lg transition-all duration-200 ${isActive
                                         ? "bg-primary-400 text-darks"
-                                        : "hover:bg-gray-100 hover:text-darks"
+                                        : "hover:bg-gray-700/50 hover:text-white"
                                     }`
                                 }
                             >
-                                {link.icon}
-                                <span>{link.name}</span>
+                                <div className="shrink-0">
+                                    {link.icon}
+                                </div>
+                                {!isCollapsed && <span className="whitespace-nowrap overflow-hidden text-ellipsis">{link.name}</span>}
                             </NavLink>
-                        ))}
-                    </div>
+                        );
+
+                        return isCollapsed ? (
+                            <Tooltip label={link.name} position="right" key={link.url} withArrow>
+                                <div>{content}</div>
+                            </Tooltip>
+                        ) : content;
+                    })}
                 </div>
             </div>
         </div>
+    );
+
+    return (
+        <>
+            {/* Desktop Sidebar */}
+            <div className={`hidden md:flex flex-col h-screen bg-darks transition-all duration-300 ease-in-out shrink-0 ${desktopCollapsed ? 'w-20' : 'w-64'}`}>
+               <SidebarContent isCollapsed={desktopCollapsed} />
+            </div>
+
+            {/* Mobile Drawer */}
+            <Drawer 
+                opened={mobileOpened} 
+                onClose={closeMobile} 
+                size="75%" 
+                padding={0}
+                withCloseButton={false}
+                className="md:hidden"
+                scrollAreaComponent={ScrollArea.Autosize}
+            >
+                <SidebarContent isCollapsed={false} />
+            </Drawer>
+        </>
     )
 }
 

@@ -1,5 +1,5 @@
 import { ActionIcon, Indicator, Menu, useMantineColorScheme, useComputedColorScheme } from "@mantine/core"; 
-import { IconBellRinging, IconLayoutSidebarLeftCollapseFilled, IconSun, IconMoon } from "@tabler/icons-react";
+import { IconBellRinging, IconLayoutSidebarLeftCollapseFilled, IconSun, IconMoon, IconMenu2 } from "@tabler/icons-react";
 import ProfileMenu from "./ProfileMenu";
 import { useDispatch, useSelector } from "react-redux";
 import { addNotification, markAllRead } from "../../Slices/NotificationSlice";
@@ -37,10 +37,24 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
     <div className="bg-light dark:bg-gray-800 dark:border-b dark:border-gray-700 shadow-lg w-full h-16 flex justify-between px-5 items-center transition-colors duration-300 shrink-0 z-20">
       
       {/* Sidebar Toggle Button */}
+        {/* Sidebar Toggle Button */}
       <ActionIcon size="lg" variant="transparent" onClick={toggleSidebar} className="text-gray-700 dark:text-gray-200">
-        <IconLayoutSidebarLeftCollapseFilled style={{ width: "90%", height: "90%" }} stroke={1.5} />
-      </ActionIcon>
+        
+        {/* ✅ Hamburger Icon: Visible on Mobile, Hidden on Desktop */}
+        <IconMenu2 
+            className="block md:hidden" 
+            style={{ width: "90%", height: "90%" }} 
+            stroke={1.5} 
+        />
 
+        {/* ✅ Collapse Icon: Hidden on Mobile, Visible on Desktop */}
+        <IconLayoutSidebarLeftCollapseFilled 
+            className="hidden md:block" 
+            style={{ width: "90%", height: "90%" }} 
+            stroke={1.5} 
+        />
+        
+      </ActionIcon>
       <div className="flex gap-4 md:gap-5 items-center">
 
         {/* Dark Mode Toggle */}
