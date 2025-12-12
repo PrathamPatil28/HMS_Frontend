@@ -1,9 +1,8 @@
 import Doctor from "../../Components/Admin/Doctor/Doctor"
 
-
 const AdminDoctorPage = () => {
   return (
-    <div className="p-5">
+    <div className="w-full h-full transition-colors duration-300">
       <Doctor/>
     </div>
   )

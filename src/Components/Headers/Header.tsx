@@ -21,7 +21,7 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
   const jwt = useSelector((state: any) => state.jwt);
   const user = useSelector((state: any) => state.user);
   const { unreadCount, list } = useSelector((s: any) => s.notifications);
-
+  
   const dispatch = useDispatch();
 
   // Dark Mode Hooks

@@ -1,15 +1,17 @@
-import { Avatar, Card, Text, Group, Stack, Grid, Box, Badge } from "@mantine/core";
+import { Avatar, Card, Text, Group, Stack, Badge, Button, Divider, SimpleGrid, Tooltip, ActionIcon } from "@mantine/core";
 import {
   IconMail,
   IconPhone,
-  IconCalendar,
   IconMapPin,
   IconCertificate,
-  IconStethoscope,
+  IconBriefcase,
   IconBuildingHospital,
-  IconAward,
+
+  IconCopy
 } from "@tabler/icons-react";
-import { formatDateAppShort } from "../../../util/DateFormat";
+import { formatDateDDMMYYYY } from "../../../util/DateFormat";
+import { notifications } from "@mantine/notifications";
+import useProtectedImage from "../../Utilities/hook/useProtectedImage"; // ✅ 1. Import Hook
 
 const DoctorCard = ({
   name,
@@ -22,150 +24,140 @@ const DoctorCard = ({
   specialization,
   department,
   totalExp,
+  profilePictureId // ✅ 2. Get ID from props
 }: any) => {
+  
+  // ✅ 3. Fetch Image URL using the hook
+  const imageUrl = useProtectedImage(profilePictureId);
+
+  // Generate Initials
   const initials = name
-    ? name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
+    ? name.split(" ").map((n: string) => n[0]).join("").toUpperCase()
     : "?";
 
-  const InfoRow = ({
-    icon: Icon,
-    label,
-    value,
-  }: {
-    icon: any;
-    label?: string;
-    value: string | number | null | undefined;
-  }) => (
-    <Group gap="xs" wrap="nowrap" className="flex-1">
-      <Icon size={16} stroke={1.5} className="text-gray-500" />
-      <Stack gap={0}>
-        {label && (
-          <Text size="xs" c="dimmed">
-            {label}
-          </Text>
-        )}
-        <Text size="sm" lineClamp={1}>
-          {value || "N/A"}
+  // Helper for Copying Text
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    notifications.show({
+        title: 'Copied',
+        message: `${label} copied to clipboard`,
+        color: 'blue',
+        position: 'bottom-center'
+    });
+  };
+
+  const InfoItem = ({ icon: Icon, value, label, copyable = false }: any) => (
+    <div className="flex items-start gap-3 group">
+      <div className="mt-1 p-1.5 rounded-md bg-gray-50 dark:bg-gray-700 text-primary-500 dark:text-primary-400 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/30 transition-colors">
+        <Icon size={16} stroke={1.5} />
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <Text size="xs" c="dimmed" fw={600} tt="uppercase" className="mb-0.5">
+          {label}
         </Text>
-      </Stack>
-    </Group>
+        <Group gap={4} wrap="nowrap">
+            <Text size="sm" fw={500} truncate className="dark:text-gray-200">
+            {value || "N/A"}
+            </Text>
+            {copyable && value && (
+                <ActionIcon 
+                    variant="subtle" color="gray" size="xs" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => { e.stopPropagation(); copyToClipboard(value, label); }}
+                >
+                    <IconCopy size={10} />
+                </ActionIcon>
+            )}
+        </Group>
+      </div>
+    </div>
   );
 
   return (
     <Card
-      shadow="md"
-      padding="lg"
+      padding="0"
       radius="lg"
       withBorder
-    className="h-full bg-white !transition-all !duration-300 !ease-in-out hover:!shadow-lg hover:!bg-primary-200 cursor-pointer w-full"
-
+      className="group relative flex flex-col h-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden"
     >
-      {/* Header */}
-      <div className="border-b border-gray-200 pb-3 mb-4">
-        <Group align="center" wrap="nowrap">
-          <Avatar radius="xl" size="lg" color="cyan" variant="filled">
-            {initials}
-          </Avatar>
-          <Stack gap={0}>
-            <Text fw={700} size="xl" lineClamp={1}>
-              {name}
-            </Text>
-            <Text size="sm" c="dimmed">
-              Doctor ID: DOC0{id}
-            </Text>
-          </Stack>
-        </Group>
+      {/* 1. DECORATIVE HEADER BANNER */}
+      <div className="h-24 w-full bg-gradient-to-r from-blue-500 to-cyan-400 dark:from-blue-900 dark:to-cyan-900 relative">
+         <div className="absolute inset-0 bg-white/10 pattern-dots" /> 
+         <Badge 
+            className="absolute top-3 right-3 bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm" 
+            variant="light" 
+            color="dark"
+            size="sm"
+         >
+            ID: {id}
+         </Badge>
       </div>
 
-      <Stack gap="md">
-        {/* CONTACT INFORMATION */}
-        <Box className="bg-blue-50 p-3 rounded-md">
-          <Text size="sm" fw={600} c="blue.7" mb="sm">
-            CONTACT INFORMATION
-          </Text>
-          <Grid gutter="md">
-            <Grid.Col span={{ base: 12 }}>
-              <InfoRow icon={IconMail} label="Email" value={email} />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, sm: 6 }}>
-              <InfoRow icon={IconPhone} label="Phone" value={phone} />
-            </Grid.Col>
-            <Grid.Col span={12}>
-              <InfoRow icon={IconMapPin} label="Address" value={address} />
-            </Grid.Col>
-          </Grid>
-        </Box>
+      {/* 2. PROFILE SECTION (Overlapping) */}
+      <div className="px-5 relative flex flex-col items-center -mt-12 text-center">
+        <Avatar 
+            size={80} 
+            radius="100%" 
+            src={imageUrl} // ✅ 4. Pass generated URL here
+            alt={name}
+            className="border-[4px] border-white dark:border-gray-800 shadow-md bg-white dark:bg-gray-700 text-xl font-bold text-primary-600"
+            color="initials"
+        >
+            {initials}
+        </Avatar>
+        
+        <div className="mt-3 w-full">
+            <Text size="lg" fw={700} className="text-gray-900 dark:text-white leading-tight">
+                {name}
+            </Text>
+            <Text size="sm" c="dimmed" className="mb-3">
+                {specialization || "General Physician"}
+            </Text>
 
-        {/* PERSONAL DETAILS */}
-        <Box className="bg-blue-50 p-3 rounded-md">
-          <Text size="sm" fw={600} c="blue.7" mb="sm">
-            PERSONAL DETAILS
-          </Text>
-          <Grid gutter="md">
-            <Grid.Col span={12}>
-              <InfoRow
-                icon={IconCalendar}
-                label="Date of Birth"
-                value={dob ? formatDateAppShort(dob) : "N/A"}
-              />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, sm: 6 }}>
-              <InfoRow icon={IconCertificate} label="Licence No" value={licenceNo} />
-            </Grid.Col>
-          </Grid>
-        </Box>
-
-        {/* PROFESSIONAL INFORMATION */}
-        <Box className="bg-blue-50 p-3 rounded-md">
-          <Text size="sm" fw={600} c="blue.7" mb="sm">
-            PROFESSIONAL INFORMATION
-          </Text>
-          <Stack gap="xs">
-            <div className="flex  gap-3">
-            <Group gap="xs" wrap="nowrap">
-              <IconStethoscope size={16} stroke={1.5} className="text-gray-500" />
-              <Stack gap={0}>
-                <Text size="xs" c="dimmed">
-                  Specialization
-                </Text>
-                <Badge color="cyan" radius="sm" size="lg" variant="light">
-                  {specialization || "N/A"}
+            <Group justify="center" gap={8} mt={4}>
+                <Badge 
+                    leftSection={<IconBuildingHospital size={14} style={{ marginTop: 1 }} />} 
+                    variant="light" 
+                    color="blue" 
+                    size="md"
+                    radius="sm"
+                    className="normal-case font-semibold"
+                >
+                    {department || "General"}
                 </Badge>
-              </Stack>
-            </Group>
 
-            <Group gap="xs" wrap="nowrap">
-              <IconBuildingHospital size={16} stroke={1.5} className="text-gray-500" />
-              <Stack gap={0}>
-                <Text size="xs" c="dimmed">
-                  Department
-                </Text>
-                <Badge color="blue" radius="sm" size="lg" variant="light">
-                  {department || "N/A"}
+                <Badge 
+                    leftSection={<IconBriefcase size={14} style={{ marginTop: 1 }} />} 
+                    variant="light" 
+                    color="teal" 
+                    size="md" 
+                    radius="sm"
+                    className="normal-case font-semibold"
+                >
+                    {totalExp ? `${totalExp} Years Exp.` : "Fresher"}
                 </Badge>
-              </Stack>
             </Group>
+        </div>
+      </div>
 
-                 </div>
+      <Divider my="md" className="border-gray-100 dark:border-gray-700" />
 
-            <Group gap="xs" wrap="nowrap">
-              <IconAward size={16} stroke={1.5} className="text-gray-500" />
-              <Stack gap={0}>
-                <Text size="xs" c="dimmed">
-                  Experience
-                </Text>
-                <Badge color="green" radius="sm" size="lg" variant="light">
-                  {totalExp ? `${totalExp} yrs` : "N/A"}
-                </Badge>
-              </Stack>
-            </Group>
-          </Stack>
-        </Box>
-      </Stack>
+      {/* 3. DETAILS GRID */}
+      <div className="px-5 pb-5 flex-1">
+        <SimpleGrid cols={1} spacing="md">
+            <InfoItem icon={IconMail} label="Email Address" value={email} copyable />
+            <InfoItem icon={IconPhone} label="Phone Number" value={phone} copyable />
+            
+            <div className="grid grid-cols-2 gap-2">
+                <InfoItem icon={IconCertificate} label="Licence" value={licenceNo} />
+                <InfoItem icon={IconBriefcase} label="DOB" value={dob ? formatDateDDMMYYYY(dob) : null} />
+            </div>
+
+            <InfoItem icon={IconMapPin} label="Location" value={address} />
+        </SimpleGrid>
+      </div>
+
+    
     </Card>
   );
 };
