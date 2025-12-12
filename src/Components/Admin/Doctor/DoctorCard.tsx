@@ -1,4 +1,4 @@
-import { Avatar, Card, Text, Group, Stack, Badge, Button, Divider, SimpleGrid, Tooltip, ActionIcon } from "@mantine/core";
+import { Avatar, Card, Text, Group,  Badge,  Divider, SimpleGrid,  ActionIcon } from "@mantine/core";
 import {
   IconMail,
   IconPhone,

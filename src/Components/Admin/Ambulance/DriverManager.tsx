@@ -1,90 +1,85 @@
 import { useEffect, useState } from "react";
-import { Table, Badge, Select, Text, Tooltip, ActionIcon } from "@mantine/core";
+import { Table, Badge, Select, Text, Tooltip,  Paper, Avatar, Group } from "@mantine/core";
 import { getAllDrivers, updateDriverStatus, DriverDTO, DriverStatus } from "../../../Service/AmbulanceService";
 import { errorNotification, successNotification } from "../../../util/NotificationUtil";
-import { IconMapPin } from "@tabler/icons-react";
+import {  IconPhone, IconId } from "@tabler/icons-react";
 
 const DriverManager = () => {
   const [drivers, setDrivers] = useState<DriverDTO[]>([]);
 
-  const fetchData = () => {
-    getAllDrivers().then(setDrivers).catch(console.error);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const fetchData = () => { getAllDrivers().then(setDrivers).catch(console.error); };
+  useEffect(() => { fetchData(); }, []);
 
   const handleStatusChange = (id: number, newStatus: string | null) => {
     if (!newStatus) return;
-    
-    // Type assertion to ensure string is a valid DriverStatus
     updateDriverStatus(id, newStatus as DriverStatus)
-      .then(() => {
-        successNotification("Driver Status Updated");
-        fetchData();
-      })
-      .catch(() => errorNotification("Failed to update status"));
+      .then(() => { successNotification("Status Updated"); fetchData(); })
+      .catch(() => errorNotification("Failed to update"));
   };
 
   const rows = drivers.map((driver) => (
     <Table.Tr key={driver.id}>
-      <Table.Td>{driver.id}</Table.Td>
       <Table.Td>
-          <Text size="sm" fw={500}>{driver.name}</Text>
-          {/* Show GPS Icon if coordinates exist */}
-          {driver.currentLat && driver.currentLng && (
-              <Tooltip label={`Last known: ${driver.currentLat.toFixed(4)}, ${driver.currentLng.toFixed(4)}`}>
-                  <ActionIcon size="xs" variant="transparent" color="blue">
-                      <IconMapPin size={12} />
-                  </ActionIcon>
-              </Tooltip>
-          )}
+        <Group gap="sm">
+            <Avatar size={40} radius="xl" color="indigo" variant="light">{driver.name[0]}</Avatar>
+            <div>
+                <Text size="sm" fw={600}>{driver.name}</Text>
+                <Group gap={4}>
+                     <IconPhone size={12} className="text-gray-500" />
+                     <Text size="xs" c="dimmed">{driver.phone}</Text>
+                </Group>
+            </div>
+        </Group>
       </Table.Td>
-      <Table.Td>{driver.phone}</Table.Td>
-      <Table.Td>{driver.licenseNumber}</Table.Td>
       <Table.Td>
-        <Badge
-          color={
-            driver.status === "AVAILABLE"
-              ? "green"
-              : driver.status === "ON_TRIP"
-              ? "red"
-              : "gray"
-          }
-        >
-          {driver.status}
-        </Badge>
+         <Group gap={5}>
+            <IconId size={14} className="text-gray-400" />
+            <Text size="sm">{driver.licenseNumber}</Text>
+         </Group>
+      </Table.Td>
+      <Table.Td>
+         {driver.currentLat ? (
+            <Tooltip label="GPS Active">
+                 <Badge variant="dot" color="green" size="sm">Online</Badge>
+            </Tooltip>
+         ) : <Badge variant="dot" color="gray" size="sm">Offline</Badge>}
       </Table.Td>
       <Table.Td>
         <Select
           size="xs"
+          variant="filled"
+          radius="md"
+          w={140}
           value={driver.status}
-          data={["AVAILABLE", "OFF_DUTY", "ON_TRIP"]}
+          data={[
+              { value: "AVAILABLE", label: "🟢 Available" },
+              { value: "OFF_DUTY", label: "⚪ Off Duty" },
+              { value: "ON_TRIP", label: "🔴 On Trip" }
+          ]}
           onChange={(val) => handleStatusChange(driver.id, val)}
-          disabled={driver.status === "ON_TRIP"} // Prevent changing status manually if on trip (system handles it)
+          disabled={driver.status === "ON_TRIP"}
+          classNames={{ input: 'font-semibold' }}
         />
       </Table.Td>
     </Table.Tr>
   ));
 
   return (
-    <div className="bg-white p-5 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold text-neutral-700 mb-4">Driver Roster</h2>
-      <Table striped highlightOnHover withTableBorder>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>ID</Table.Th>
-            <Table.Th>Name</Table.Th>
-            <Table.Th>Phone</Table.Th>
-            <Table.Th>License</Table.Th>
-            <Table.Th>Status</Table.Th>
-            <Table.Th>Update Status</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
-    </div>
+    <Paper shadow="xs" radius="lg" p="lg" withBorder className="bg-white dark:bg-gray-800 dark:border-gray-700">
+      <Group justify="space-between" mb="lg">
+         <div>
+            <Text size="xl" fw={700}>Driver Roster</Text>
+            <Text size="xs" c="dimmed">Manage driver availability and status</Text>
+        </div>
+      </Group>
+      
+      <Table.ScrollContainer minWidth={600}>
+        <Table verticalSpacing="md" highlightOnHover>
+          <Table.Thead><Table.Tr><Table.Th>Driver Details</Table.Th><Table.Th>License</Table.Th><Table.Th>GPS</Table.Th><Table.Th>Status</Table.Th></Table.Tr></Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
+    </Paper>
   );
 };
 

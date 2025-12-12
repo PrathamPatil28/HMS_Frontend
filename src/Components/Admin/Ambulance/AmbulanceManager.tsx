@@ -1,132 +1,162 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Badge, Modal, TextInput, Select, Group } from "@mantine/core";
+import { 
+  Table, Button, Badge, Modal, TextInput, Select, Group, Text, 
+  Paper, ActionIcon, Menu, Input, ThemeIcon, ScrollArea 
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { IconPlus } from "@tabler/icons-react";
+import { 
+  IconPlus, IconAmbulance, IconDotsVertical, 
+  IconSettings, IconSearch, IconTruck 
+} from "@tabler/icons-react";
 import { getAllAmbulances, addAmbulance, updateAmbulanceStatus, AmbulanceDTO } from "../../../Service/AmbulanceService";
 import { errorNotification, successNotification } from "../../../util/NotificationUtil";
 
 const AmbulanceManager = () => {
   const [ambulances, setAmbulances] = useState<AmbulanceDTO[]>([]);
+  const [search, setSearch] = useState("");
   const [opened, { open, close }] = useDisclosure(false);
 
   const form = useForm({
-    initialValues: {
-      vehicleNumber: "",
-      vehicleType: "BASIC",
-    },
-    validate: {
-      vehicleNumber: (value) => (value.length < 2 ? "Vehicle Number is required" : null),
-    },
+    initialValues: { vehicleNumber: "", vehicleType: "BASIC" },
+    validate: { vehicleNumber: (value) => (value.length < 2 ? "Required" : null) },
   });
 
-  const fetchData = () => {
-    getAllAmbulances().then(setAmbulances).catch(console.error);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const fetchData = () => { getAllAmbulances().then(setAmbulances).catch(console.error); };
+  useEffect(() => { fetchData(); }, []);
 
   const handleAdd = (values: typeof form.values) => {
-    // Initial status is AVAILABLE
     addAmbulance({ ...values, status: "AVAILABLE" })
-      .then(() => {
-        successNotification("Ambulance Added Successfully");
-        close();
-        form.reset();
-        fetchData();
-      })
-      .catch(() => errorNotification("Failed to add ambulance"));
+      .then(() => { successNotification("Ambulance Added"); close(); form.reset(); fetchData(); })
+      .catch(() => errorNotification("Failed to add"));
   };
 
   const handleStatusChange = (id: number, currentStatus: string) => {
-    // ✅ FIXED: Use 'OUT_OF_SERVICE' instead of 'UNDER_MAINTENANCE'
     const newStatus = currentStatus === "AVAILABLE" ? "OUT_OF_SERVICE" : "AVAILABLE";
-    
-    updateAmbulanceStatus(id, newStatus as any)
-      .then(() => {
-        successNotification("Ambulance Status Updated");
-        fetchData();
-      })
-      .catch(() => errorNotification("Failed to update status"));
+    updateAmbulanceStatus(id, newStatus as any).then(() => { successNotification("Status Updated"); fetchData(); });
   };
 
-  const rows = ambulances.map((amb) => (
+  // Filter Logic
+  const filteredAmbs = ambulances.filter(a => 
+    a.vehicleNumber.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const rows = filteredAmbs.map((amb) => (
     <Table.Tr key={amb.id}>
-      <Table.Td>{amb.id}</Table.Td>
-      <Table.Td className="font-bold">{amb.vehicleNumber}</Table.Td>
       <Table.Td>
-        <Badge color={amb.vehicleType === "ICU" ? "red" : "blue"}>{amb.vehicleType}</Badge>
+        <Group gap="sm">
+            <ThemeIcon variant="light" color="blue" size="md" radius="md">
+                <IconAmbulance size={18}/>
+            </ThemeIcon>
+            <div>
+                <Text fw={600} size="sm" className="dark:text-gray-200">{amb.vehicleNumber}</Text>
+                <Text size="10px" c="dimmed">ID: {amb.id}</Text>
+            </div>
+        </Group>
+      </Table.Td>
+      <Table.Td>
+        <Badge variant="outline" color={amb.vehicleType === "ICU" ? "red" : "blue"}>
+            {amb.vehicleType}
+        </Badge>
       </Table.Td>
       <Table.Td>
         <Badge
-          color={
-            (amb.status as any) === "AVAILABLE"
-              ? "green"
-              : (amb.status as any) === "OUT_OF_SERVICE" // ✅ FIXED CHECK
-              ? "gray" // Changed to gray for maintenance/out of service
-              : "orange" // BOOKED
-          }
+          variant="dot"
+          size="md"
+          color={ (amb.status as any) === "AVAILABLE" ? "teal" : (amb.status as any) === "OUT_OF_SERVICE" ? "gray" : "orange" }
         >
-          {/* Display a friendlier name if needed, but keep raw value for now */}
           {amb.status === "OUT_OF_SERVICE" ? "MAINTENANCE" : amb.status}
         </Badge>
       </Table.Td>
       <Table.Td>
-        {/* Hide button if the ambulance is busy (BOOKED) */}
-        {(amb.status as any) !== "BOOKED" && (
-            <Button
-            size="xs"
-            variant="light"
-            // ✅ Toggle Color based on Current Status
-            color={(amb.status as any) === "AVAILABLE" ? "red" : "green"}
-            onClick={() => handleStatusChange(amb.id!, amb.status)}
-            >
-            {(amb.status as any) === "AVAILABLE" ? "Set Maintenance" : "Set Available"}
-            </Button>
-        )}
+        <Menu shadow="md" width={200} position="bottom-end">
+            <Menu.Target>
+                <ActionIcon variant="subtle" color="gray"><IconDotsVertical size={16} /></ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+                <Menu.Label>Actions</Menu.Label>
+                <Menu.Item 
+                    disabled={(amb.status as any) === "BOOKED"}
+                    leftSection={<IconSettings size={14} />}
+                    onClick={() => handleStatusChange(amb.id!, amb.status)}
+                    color={(amb.status as any) === "AVAILABLE" ? "red" : "teal"}
+                >
+                    {(amb.status as any) === "AVAILABLE" ? "Set Maintenance" : "Set Available"}
+                </Menu.Item>
+            </Menu.Dropdown>
+        </Menu>
       </Table.Td>
     </Table.Tr>
   ));
 
   return (
-    <div className="bg-white p-5 rounded-lg shadow-md">
-      <Group justify="space-between" mb="md">
-        <h2 className="text-xl font-bold text-neutral-700">Fleet Management</h2>
-        <Button leftSection={<IconPlus size={16} />} onClick={open}>
-          Add Ambulance
+    <Paper shadow="xs" radius="lg" p="lg" withBorder className="bg-white dark:bg-gray-800 dark:border-gray-700 transition-colors duration-300">
+      
+      {/* Header */}
+      <Group justify="space-between" mb="lg">
+        <div>
+            <Text size="xl" fw={700} className="dark:text-white">Fleet Management</Text>
+            <Text size="xs" c="dimmed">Manage ambulance availability and status</Text>
+        </div>
+        <Button leftSection={<IconPlus size={16} />} onClick={open} color="blue" variant="light">
+            Add Vehicle
         </Button>
       </Group>
 
-      <Table striped highlightOnHover withTableBorder>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>ID</Table.Th>
-            <Table.Th>Vehicle No</Table.Th>
-            <Table.Th>Type</Table.Th>
-            <Table.Th>Status</Table.Th>
-            <Table.Th>Action</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
+      {/* Search Bar */}
+      <div className="mb-4 max-w-md">
+        <Input 
+            placeholder="Search vehicle number..." 
+            leftSection={<IconSearch size={16}/>} 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)}
+            className="dark:text-gray-200"
+        />
+      </div>
 
-      <Modal opened={opened} onClose={close} title="Add New Ambulance" centered>
+      {/* Table */}
+      <Table.ScrollContainer minWidth={600}>
+        <Table verticalSpacing="sm" highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+                <Table.Th>Vehicle Info</Table.Th>
+                <Table.Th>Type</Table.Th>
+                <Table.Th>Status</Table.Th>
+                <Table.Th>Action</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {rows.length > 0 ? rows : (
+                <Table.Tr>
+                    <Table.Td colSpan={4} align="center" py="xl">
+                        <Text c="dimmed">No vehicles found</Text>
+                    </Table.Td>
+                </Table.Tr>
+            )}
+          </Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
+
+      {/* Add Modal */}
+      <Modal opened={opened} onClose={close} title="Register New Ambulance" centered>
         <form onSubmit={form.onSubmit(handleAdd)}>
-          <TextInput label="Vehicle Number" placeholder="MH-04-AB-1234" {...form.getInputProps("vehicleNumber")} mb="md" />
-          <Select
-            label="Vehicle Type"
-            data={["BASIC", "ADVANCED", "ICU", "MORTUARY"]}
-            {...form.getInputProps("vehicleType")}
-            mb="lg"
+          <TextInput 
+            label="Vehicle Number" 
+            placeholder="MH-04-AB-1234" 
+            leftSection={<IconTruck size={16}/>}
+            {...form.getInputProps("vehicleNumber")} 
+            mb="md" 
           />
-          <Button type="submit" fullWidth>
-            Save Ambulance
-          </Button>
+          <Select 
+            label="Type" 
+            data={["BASIC", "ADVANCED", "ICU", "MORTUARY"]} 
+            {...form.getInputProps("vehicleType")} 
+            mb="lg" 
+          />
+          <Button type="submit" fullWidth>Save to Fleet</Button>
         </form>
       </Modal>
-    </div>
+    </Paper>
   );
 };
 
