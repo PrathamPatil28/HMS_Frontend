@@ -1,4 +1,4 @@
-import { Avatar, Text, Drawer, ScrollArea, Tooltip } from "@mantine/core";
+import { Avatar, Text, Drawer, Tooltip } from "@mantine/core"; 
 import { IconLayoutDashboard, IconUser, IconTruck, IconHeartbeat, IconCashBanknote } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -26,12 +26,9 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
 
   useEffect(() => {
     if (!user) return;
-
     if (user.role === "DRIVER") {
       getDriverByUser(user.id)
-        .then((data) => {
-            setPicId(data.profilePictureId); 
-        })
+        .then((data) => setPicId(data.profilePictureId))
         .catch((err: any) => console.log("Error fetching driver picture:", err));
     } else {
       getUserProfile(user.id)
@@ -43,35 +40,30 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
   const url = useProtectedImage(picId);
 
   const SidebarContent = ({ isCollapsed }: { isCollapsed?: boolean }) => (
-    <div className="bg-darks h-full w-full flex flex-col no-scrollbar">
+    // ✅ FIX 1: Added overflow-hidden to parent to stop horizontal scrollbar
+    <div className="bg-darks h-full w-full flex flex-col overflow-hidden">
         
-        {/* --- FIXED HEADER SECTION (Logo & User) --- */}
+        {/* --- FIXED HEADER SECTION --- */}
         <div className="shrink-0 flex flex-col items-center">
-            {/* Logo */}
             <div className={`py-4 bg-darks text-primary-400 flex gap-1 items-center justify-center transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
                 <IconHeartbeat size={isCollapsed ? 30 : 40} stroke={2.5} />
                 {!isCollapsed && <span className="font-heading font-semibold text-3xl transition-opacity duration-300">Pulse</span>}
             </div>
 
-            {/* User Profile */}
             <div className={`flex flex-col gap-1 items-center mt-6 mb-4 transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
                 <div className="p-1 bg-white rounded-full shadow-xl">
                     <Avatar variant="filled" src={url} size={isCollapsed ? 'md' : 'xl'} alt="Profile" />
                 </div>
-                
                 {!isCollapsed && (
                     <div className="text-center transition-opacity duration-300 animate-fade-in">
                         <span className="font-medium text-light block">{user?.name}</span>
-                        <Text className="text-light" c="dimmed" size="xs">
-                            {user?.role}
-                        </Text>
+                        <Text className="text-light" c="dimmed" size="xs">{user?.role}</Text>
                     </div>
                 )}
             </div>
         </div>
-
-        {/* --- SCROLLABLE LINKS SECTION --- */}
-        <div className="flex-1 overflow-y-auto px-2 pb-6 no-scrollbar">
+        
+        <div className="flex-1 overflow-y-auto px-2 pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             <div className="flex flex-col gap-2">
                 {links.map((link) => {
                     const content = (
@@ -85,13 +77,10 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
                                 }`
                             }
                         >
-                            <div className="shrink-0">
-                                {link.icon}
-                            </div>
+                            <div className="shrink-0">{link.icon}</div>
                             {!isCollapsed && <span className="whitespace-nowrap overflow-hidden text-ellipsis">{link.name}</span>}
                         </NavLink>
                     );
-
                     return isCollapsed ? (
                         <Tooltip label={link.name} position="right" key={link.url} withArrow>
                             <div>{content}</div>
@@ -118,7 +107,14 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
           padding={0}
           withCloseButton={false}
           className="md:hidden"
-          scrollAreaComponent={ScrollArea.Autosize}
+          transitionProps={{ transition: 'slide-right', duration: 250 }}
+          
+      
+          classNames={{
+             root: 'md:hidden',
+             content: '!h-[100dvh] flex flex-col bg-darks overflow-hidden', 
+             body: 'h-full flex-1 p-0 overflow-hidden' 
+          }}
       >
           <SidebarContent isCollapsed={false} />
       </Drawer>

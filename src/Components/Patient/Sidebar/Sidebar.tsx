@@ -1,4 +1,4 @@
-import { Avatar, Text, Drawer, ScrollArea, Tooltip } from "@mantine/core"
+import { Avatar, Text, Drawer, Tooltip } from "@mantine/core"
 import { IconAmbulance, IconCalendarCheck, IconDroplet, IconFileInvoiceFilled, IconHeartbeat, IconLayoutGrid, IconReceipt2, IconTestPipe, IconUser } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
@@ -40,9 +40,11 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
   const url = useProtectedImage(picId)
 
   const SidebarContent = ({ isCollapsed }: { isCollapsed?: boolean }) => (
-    <div className="bg-darks h-full w-full flex flex-col no-scrollbar">
+    // ✅ Added overflow-hidden to parent to handle inner scroll properly
+    <div className="bg-darks h-full w-full flex flex-col overflow-hidden">
         
         {/* --- FIXED HEADER SECTION (Logo & User) --- */}
+        {/* shrink-0 prevents this section from collapsing when scrolling happens */}
         <div className="shrink-0 flex flex-col items-center">
             {/* Logo */}
             <div className={`py-4 bg-darks text-primary-400 flex gap-1 items-center justify-center transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
@@ -66,7 +68,8 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
         </div>
 
         {/* --- SCROLLABLE LINKS SECTION --- */}
-        <div className="flex-1 overflow-y-auto px-2 pb-6 no-scrollbar">
+        {/* flex-1 fills remaining space, overflow-y-auto enables scrolling */}
+        <div className="flex-1 overflow-y-auto px-2 pb-6 no-scrollbar overflow-x-hidden">
             <div className="flex flex-col gap-2">
                 {links.map((link) => {
                     const content = (
@@ -111,7 +114,13 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
           padding={0}
           withCloseButton={false}
           className="md:hidden"
-          scrollAreaComponent={ScrollArea.Autosize}
+          transitionProps={{ transition: 'slide-right', duration: 250 }}
+          // ✅ KEY FIX: Using classNames to force full height and handle scrolling internally
+          classNames={{
+             root: 'md:hidden',
+             content: 'h-full flex flex-col',
+             body: 'h-full p-0 flex-1 overflow-hidden'
+          }}
       >
           <SidebarContent isCollapsed={false} />
       </Drawer>

@@ -1,12 +1,12 @@
-import { Avatar, Text, Drawer, ScrollArea, Tooltip } from "@mantine/core"
+import { Avatar, Text, Drawer, Tooltip } from "@mantine/core"; // Removed ScrollArea from usage
 import { 
     IconAmbulance, IconBed, IconDroplet, IconFlask, IconHeartbeat, 
     IconLayoutGrid, IconMoodHeart, IconPackages, IconPill, 
     IconReceipt2, IconReceiptRupee, IconStethoscope, IconCashBanknote 
-} from "@tabler/icons-react"
-import { useEffect } from "react"
-import { useSelector } from "react-redux"
-import { NavLink } from "react-router-dom"
+} from "@tabler/icons-react";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { NavLink } from "react-router-dom";
 
 const links = [
     { name: "Dashboard", url: "/admin/dashboard", icon: <IconLayoutGrid stroke={1.5} /> },
@@ -21,7 +21,7 @@ const links = [
     { name: "Sales", url: "/admin/sales", icon: <IconReceiptRupee stroke={1.5} /> },
     { name: "Billing", url: "/admin/billing", icon: <IconReceipt2 stroke={1.5} /> },
     { name: "Payroll", url: "/admin/payroll", icon: <IconCashBanknote stroke={1.5} /> },
-]
+];
 
 interface SidebarProps {
     mobileOpened: boolean;
@@ -34,13 +34,15 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
 
     useEffect(() => {
         // console.log(user);
-    })
+    });
 
     // This component renders the actual content inside the Sidebar/Drawer
     const SidebarContent = ({ isCollapsed }: { isCollapsed?: boolean }) => (
-        <div className="bg-darks h-full w-full flex flex-col no-scrollbar">
+        // Added h-full, overflow-hidden to parent to contain the scrollable child
+        <div className="bg-darks h-full w-full flex flex-col overflow-hidden">
             
             {/* --- FIXED HEADER SECTION (Logo & User) --- */}
+            {/* shrink-0 prevents this section from collapsing when scrolling happens */}
             <div className="shrink-0 flex flex-col items-center">
                 {/* Logo */}
                 <div className={`py-4 bg-darks text-primary-400 flex gap-1 items-center justify-center transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
@@ -64,7 +66,8 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
             </div>
 
             {/* --- SCROLLABLE LINKS SECTION --- */}
-            <div className="flex-1 overflow-y-auto px-2 pb-6 no-scrollbar">
+            {/* flex-1: takes remaining height. overflow-y-auto: scrolls vertically. no-scrollbar: hides visual bar */}
+            <div className="flex-1 overflow-y-auto px-2 pb-6 no-scrollbar overflow-x-hidden">
                 <div className="flex flex-col gap-2">
                     {links.map((link) => {
                         const content = (
@@ -110,12 +113,18 @@ const Sidebar = ({ mobileOpened, closeMobile, desktopCollapsed }: SidebarProps) 
                 padding={0}
                 withCloseButton={false}
                 className="md:hidden"
-                scrollAreaComponent={ScrollArea.Autosize}
+                transitionProps={{ transition: 'slide-right', duration: 250 }}
+                // ✅ KEY FIX: Using classNames to force full height and handle scrolling internally
+                classNames={{
+                    root: 'md:hidden',
+                    content: 'h-full flex flex-col',
+                    body: 'h-full p-0 flex-1 overflow-hidden' // overflow-hidden here prevents double scrollbars
+                }}
             >
                 <SidebarContent isCollapsed={false} />
             </Drawer>
         </>
-    )
+    );
 }
 
-export default Sidebar
+export default Sidebar;

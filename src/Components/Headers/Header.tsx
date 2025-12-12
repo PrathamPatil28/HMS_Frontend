@@ -1,14 +1,20 @@
-import { ActionIcon, Indicator, Menu, useMantineColorScheme, useComputedColorScheme } from "@mantine/core"; 
-import { IconBellRinging, IconLayoutSidebarLeftCollapseFilled, IconSun, IconMoon, IconMenu2 } from "@tabler/icons-react";
+import { ActionIcon, Indicator, Menu, useMantineColorScheme, useComputedColorScheme, Badge } from "@mantine/core";
+import {
+  IconBellRinging,
+  IconLayoutSidebarLeftCollapseFilled,
+  IconSun,
+  IconMoon,
+  IconMenu2
+} from "@tabler/icons-react";
 import ProfileMenu from "./ProfileMenu";
 import { useDispatch, useSelector } from "react-redux";
 import { addNotification, markAllRead } from "../../Slices/NotificationSlice";
 import { successNotification } from "../../util/NotificationUtil";
 import useNotificationSocket from "../../Hook/useNotificationSocket";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 interface HeaderProps {
-    toggleSidebar: () => void;
+  toggleSidebar: () => void;
 }
 
 const Header = ({ toggleSidebar }: HeaderProps) => {
@@ -17,16 +23,26 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
   const { unreadCount, list } = useSelector((s: any) => s.notifications);
 
   const dispatch = useDispatch();
-  
+
   // Dark Mode Hooks
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
 
   const processedIds = useRef(new Set());
 
+  // Dynamic Title (Works on Desktop/Browser Tabs)
+  useEffect(() => {
+    if (user?.role) {
+      const formattedRole = user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase();
+      document.title = `Pulse | ${formattedRole}`;
+    } else {
+      document.title = "Pulse";
+    }
+  }, [user]);
+
   useNotificationSocket(user?.id, (msg) => {
     if (processedIds.current.has(msg.id)) {
-        return;
+      return;
     }
     processedIds.current.add(msg.id);
     dispatch(addNotification(msg));
@@ -35,40 +51,56 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
 
   return (
     <div className="bg-light dark:bg-gray-800 dark:border-b dark:border-gray-700 shadow-lg w-full h-16 flex justify-between px-5 items-center transition-colors duration-300 shrink-0 z-20">
-      
-      {/* Sidebar Toggle Button */}
-        {/* Sidebar Toggle Button */}
-      <ActionIcon size="lg" variant="transparent" onClick={toggleSidebar} className="text-gray-700 dark:text-gray-200">
-        
-        {/* ✅ Hamburger Icon: Visible on Mobile, Hidden on Desktop */}
-        <IconMenu2 
-            className="block md:hidden" 
-            style={{ width: "90%", height: "90%" }} 
-            stroke={1.5} 
-        />
 
-        {/* ✅ Collapse Icon: Hidden on Mobile, Visible on Desktop */}
-        <IconLayoutSidebarLeftCollapseFilled 
-            className="hidden md:block" 
-            style={{ width: "90%", height: "90%" }} 
-            stroke={1.5} 
-        />
-        
-      </ActionIcon>
+      {/* Left Side: Toggle Icon + Mobile Role Badge */}
+      <div className="flex items-center gap-3">
+
+        {/* Sidebar Toggle Button */}
+        <ActionIcon size="lg" variant="transparent" onClick={toggleSidebar} className="text-gray-700 dark:text-gray-200">
+          <IconMenu2
+            className="block md:hidden"
+            style={{ width: "90%", height: "90%" }}
+            stroke={1.5}
+          />
+          <IconLayoutSidebarLeftCollapseFilled
+            className="hidden md:block"
+            style={{ width: "90%", height: "90%" }}
+            stroke={1.5}
+          />
+        </ActionIcon>
+
+        {/* ✅ MOBILE ONLY: Show Role Name Badge */}
+        {/* This appears next to the hamburger menu only on small screens */}
+        {user?.role && (
+          <div className="block md:hidden">
+            <Badge
+              variant="light"
+              color="blue"
+              size="sm"
+            >
+              {user.role}
+            </Badge>
+          </div>
+        )}
+
+
+      </div>
+
+      {/* Right Side: Icons & Profile */}
       <div className="flex gap-4 md:gap-5 items-center">
 
         {/* Dark Mode Toggle */}
         <ActionIcon
-            onClick={() => setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')}
-            variant="default"
-            size="lg"
-            aria-label="Toggle color scheme"
-            className="border-none shadow-none bg-transparent"
+          onClick={() => setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')}
+          variant="default"
+          size="lg"
+          aria-label="Toggle color scheme"
+          className="border-none shadow-none bg-transparent"
         >
           {computedColorScheme === 'dark' ? (
-              <IconSun stroke={1.5} className="text-yellow-400" />
+            <IconSun stroke={1.5} className="text-yellow-400" />
           ) : (
-              <IconMoon stroke={1.5} className="text-blue-600" />
+            <IconMoon stroke={1.5} className="text-blue-600" />
           )}
         </ActionIcon>
 
