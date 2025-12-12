@@ -60,38 +60,43 @@ const ProfileMenu = () => {
                     className="transition-transform group-hover:scale-105 shadow-sm"
                 />
                 <div className="hidden md:block text-left leading-4">
-                    <Text size="sm" fw={600} className="text-gray-700">{user.name}</Text>
+                    <Text size="sm" fw={600} className="text-gray-700 dark:text-gray-200">{user.name}</Text>
                     <Text size="xs" c="dimmed" className="capitalize">{user.role?.toLowerCase()}</Text>
                 </div>
-                <IconChevronRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                <IconChevronRight size={16} className="text-gray-400 dark:text-gray-500 group-hover:text-gray-600 transition-colors" />
             </Group>
         </UnstyledButton>
       </Menu.Target>
 
-      <Menu.Dropdown>
+      <Menu.Dropdown className="dark:bg-gray-800 dark:border-gray-700">
         {/* User Info Header inside Dropdown */}
-        <div className="px-3 py-2 bg-gray-50 border-b mb-2">
-            <Text size="sm" fw={600}>{user.name}</Text>
+        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700 mb-2">
+            <Text size="sm" fw={600} className="dark:text-gray-200">{user.name}</Text>
             <Text size="xs" c="dimmed" className="break-all">{user.email}</Text>
         </div>
 
         <Menu.Label>Settings</Menu.Label>
         
         <Menu.Item 
+            className="dark:text-gray-200 dark:hover:bg-gray-700"
             leftSection={<IconUser style={{ width: rem(16), height: rem(16) }} />}
-            onClick={() => navigate('/patient/profile')} // Assuming you have a profile route
+            onClick={() => navigate('/patient/profile')} 
         >
           My Profile
         </Menu.Item>
 
-        <Menu.Item leftSection={<IconSettings style={{ width: rem(16), height: rem(16) }} />}>
+        <Menu.Item 
+            className="dark:text-gray-200 dark:hover:bg-gray-700"
+            leftSection={<IconSettings style={{ width: rem(16), height: rem(16) }} />}
+        >
           Account Settings
         </Menu.Item>
 
-        <Menu.Divider />
+        <Menu.Divider className="dark:border-gray-700" />
 
         <Menu.Item 
           color="red" 
+          className="dark:hover:bg-gray-900"
           leftSection={<IconLogout style={{ width: rem(16), height: rem(16) }} />}
           onClick={handleLogout}
         >

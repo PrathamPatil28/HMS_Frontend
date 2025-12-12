@@ -1,93 +1,91 @@
-import { ActionIcon, Indicator, Menu } from "@mantine/core"; // Removed 'Button'
-import { IconBellRinging, IconLayoutSidebarLeftCollapseFilled } from "@tabler/icons-react";
+import { ActionIcon, Indicator, Menu, useMantineColorScheme, useComputedColorScheme } from "@mantine/core"; 
+import { IconBellRinging, IconLayoutSidebarLeftCollapseFilled, IconSun, IconMoon } from "@tabler/icons-react";
 import ProfileMenu from "./ProfileMenu";
 import { useDispatch, useSelector } from "react-redux";
-
 import { addNotification, markAllRead } from "../../Slices/NotificationSlice";
-
 import { successNotification } from "../../util/NotificationUtil";
 import useNotificationSocket from "../../Hook/useNotificationSocket";
 import { useRef } from "react";
 
-const Header = () => {
+interface HeaderProps {
+    toggleSidebar: () => void;
+}
+
+const Header = ({ toggleSidebar }: HeaderProps) => {
   const jwt = useSelector((state: any) => state.jwt);
   const user = useSelector((state: any) => state.user);
   const { unreadCount, list } = useSelector((s: any) => s.notifications);
 
   const dispatch = useDispatch();
   
-  // Create a set to store IDs of notifications we already showed
+  // Dark Mode Hooks
+  const { setColorScheme } = useMantineColorScheme();
+  const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
+
   const processedIds = useRef(new Set());
 
   useNotificationSocket(user?.id, (msg) => {
-    // Check if we already showed this specific Message ID
     if (processedIds.current.has(msg.id)) {
-        console.log("🚫 Duplicate notification blocked:", msg.id);
         return;
     }
-
-    // Add to the set so we don't show it again
     processedIds.current.add(msg.id);
-
-    console.log("✅ Showing notification:", msg.id);
     dispatch(addNotification(msg));
     successNotification(msg.message);
   });
 
-  // Commented out because it is not used in the JSX below
-  /* 
-  const handleLogout = () => {
-    dispatch(removeJwt());
-    dispatch(removeUser());
-  }; 
-  */
-
   return (
-    <div className="bg-light shadow-lg w-full h-16 flex justify-between px-5 items-center">
-      <ActionIcon size="lg" variant="transparent">
+    <div className="bg-light dark:bg-gray-800 dark:border-b dark:border-gray-700 shadow-lg w-full h-16 flex justify-between px-5 items-center transition-colors duration-300 shrink-0 z-20">
+      
+      {/* Sidebar Toggle Button */}
+      <ActionIcon size="lg" variant="transparent" onClick={toggleSidebar} className="text-gray-700 dark:text-gray-200">
         <IconLayoutSidebarLeftCollapseFilled style={{ width: "90%", height: "90%" }} stroke={1.5} />
       </ActionIcon>
 
-      <div className="flex gap-5 items-center">
+      <div className="flex gap-4 md:gap-5 items-center">
+
+        {/* Dark Mode Toggle */}
+        <ActionIcon
+            onClick={() => setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')}
+            variant="default"
+            size="lg"
+            aria-label="Toggle color scheme"
+            className="border-none shadow-none bg-transparent"
+        >
+          {computedColorScheme === 'dark' ? (
+              <IconSun stroke={1.5} className="text-yellow-400" />
+          ) : (
+              <IconMoon stroke={1.5} className="text-blue-600" />
+          )}
+        </ActionIcon>
 
         {jwt && (
           <Menu shadow="md" width={260}>
             <Menu.Target>
               <Indicator color="red" disabled={unreadCount === 0} label={unreadCount}>
-                <ActionIcon size="lg" variant="transparent">
+                <ActionIcon size="lg" variant="transparent" className="text-gray-700 dark:text-gray-200">
                   <IconBellRinging size={28} />
                 </ActionIcon>
               </Indicator>
             </Menu.Target>
 
-            <Menu.Dropdown>
+            <Menu.Dropdown className="dark:bg-gray-800 dark:border-gray-700">
               <Menu.Label>Notifications</Menu.Label>
 
               {list.length === 0 ? (
                 <Menu.Item disabled>No notifications</Menu.Item>
               ) : (
                 list.slice(0, 5).map((n: any, i: number) => (
-                  <Menu.Item key={i} onClick={() => dispatch(markAllRead())}>
+                  <Menu.Item key={i} onClick={() => dispatch(markAllRead())} className="dark:text-gray-200 dark:hover:bg-gray-700">
                     {n.message}
                   </Menu.Item>
                 ))
               )}
 
-              <Menu.Divider />
-              <Menu.Item onClick={() => dispatch(markAllRead())}>Mark all as read</Menu.Item>
+              <Menu.Divider className="dark:border-gray-600" />
+              <Menu.Item onClick={() => dispatch(markAllRead())} className="dark:text-gray-200 dark:hover:bg-gray-700">Mark all as read</Menu.Item>
             </Menu.Dropdown>
           </Menu>
         )}
-
-        {/* 
-          Since this section is commented out, we removed the 
-          handleLogout function and imports above to prevent Build Errors.
-        */}
-        {/* {jwt ? (
-          <Button onClick={handleLogout} color="red.8">Logout</Button>
-        ) : (
-          <Link to={"/login"}><Button>Login</Button></Link>
-        )} */}
 
         {jwt && <ProfileMenu />}
       </div>
